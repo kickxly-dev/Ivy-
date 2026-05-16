@@ -13,7 +13,9 @@ import {
   Search,
   ChevronRight,
   Shield,
+  LogOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser, displayName, userInitial, isAdmin } from "@/lib/user-context";
 
@@ -35,6 +37,12 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const name = displayName(user);
   const initial = userInitial(user);
   const admin = isAdmin(user);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await fetch("/api/auth/signout", { method: "POST" });
+    router.push("/sign-in");
+  };
 
   return (
     <motion.aside
@@ -127,7 +135,7 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         </Link>
 
         {/* User avatar */}
-        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-ivy-surface transition-colors">
+        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-ivy-surface transition-colors">
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-ivy-green/30 to-ivy-green/10 border border-ivy-green/20 flex items-center justify-center text-[10px] font-semibold text-ivy-green flex-shrink-0">
             {initial}
           </div>
@@ -140,7 +148,12 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               </div>
             </div>
           )}
-          {!collapsed && <ChevronRight size={12} className="text-ivy-text-muted flex-shrink-0" />}
+          {!collapsed && (
+            <button onClick={handleSignOut} title="Sign out"
+              className="text-ivy-text-muted hover:text-red-400 transition-colors flex-shrink-0">
+              <LogOut size={13} />
+            </button>
+          )}
         </div>
       </div>
     </motion.aside>
