@@ -9,34 +9,20 @@ import {
   MessageSquare,
   FolderOpen,
   Bot,
-  FileText,
-  Search,
   Settings,
   ChevronDown,
   Plus,
-  Users,
-  HardDrive,
-  Zap,
-  Star,
   ChevronRight,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser, displayName, userInitial, isAdmin } from "@/lib/user-context";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/core", exact: true },
   { icon: MessageSquare, label: "Chat", href: "/core/chat" },
   { icon: FolderOpen, label: "Projects", href: "/core/projects" },
   { icon: Bot, label: "Agents", href: "/core/agents" },
-  { icon: FileText, label: "Notes", href: "/core/notes" },
-  { icon: HardDrive, label: "Files", href: "/core/files" },
-  { icon: Zap, label: "Workflows", href: "/core/workflows" },
-];
-
-const workspaces = [
-  { name: "Product", color: "#4afa98" },
-  { name: "Research", color: "#60a5fa" },
-  { name: "Engineering", color: "#f472b6" },
-  { name: "Marketing", color: "#fb923c" },
 ];
 
 interface SidebarProps {
@@ -47,6 +33,10 @@ interface SidebarProps {
 export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [workspacesOpen, setWorkspacesOpen] = useState(true);
+  const user = useUser();
+  const name = displayName(user);
+  const initial = userInitial(user);
+  const admin = isAdmin(user);
 
   return (
     <motion.aside
@@ -126,53 +116,6 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
           );
         })}
 
-        {/* Workspaces section */}
-        {!collapsed && (
-          <div className="pt-4">
-            <button
-              onClick={() => setWorkspacesOpen(!workspacesOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 w-full text-[10px] text-ivy-text-muted uppercase tracking-wider font-semibold hover:text-ivy-text-subtle transition-colors"
-            >
-              <ChevronDown
-                size={10}
-                className={cn("transition-transform duration-200", !workspacesOpen && "-rotate-90")}
-              />
-              Workspaces
-              <button
-                className="ml-auto hover:text-ivy-text"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                <Plus size={12} />
-              </button>
-            </button>
-
-            <AnimatePresence>
-              {workspacesOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  {workspaces.map((ws) => (
-                    <button
-                      key={ws.name}
-                      className="flex items-center gap-2.5 px-2.5 py-1.5 w-full text-xs text-ivy-text-muted hover:text-ivy-text hover:bg-ivy-surface rounded-lg transition-colors"
-                    >
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: ws.color }}
-                      />
-                      {ws.name}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
       </div>
 
       {/* Bottom */}
@@ -188,12 +131,15 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         {/* User avatar */}
         <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-ivy-surface transition-colors">
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-ivy-green/30 to-ivy-green/10 border border-ivy-green/20 flex items-center justify-center text-[10px] font-semibold text-ivy-green flex-shrink-0">
-            A
+            {initial}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-ivy-text truncate">Alex Chen</div>
-              <div className="text-[10px] text-ivy-text-muted truncate">Pro Plan</div>
+              <div className="text-xs font-medium text-ivy-text truncate">{name}</div>
+              <div className="flex items-center gap-1 text-[10px] text-ivy-text-muted truncate">
+                {admin && <Shield size={9} className="text-ivy-green" />}
+                <span className={admin ? "text-ivy-green" : ""}>{admin ? "Admin" : "Member"}</span>
+              </div>
             </div>
           )}
           {!collapsed && <ChevronRight size={12} className="text-ivy-text-muted flex-shrink-0" />}
