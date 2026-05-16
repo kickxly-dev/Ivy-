@@ -25,7 +25,12 @@ export async function GET(request: NextRequest) {
       }
     );
     await supabase.auth.exchangeCodeForSession(code);
-    // Sign out so user must sign in with their password after verifying
+    // Password reset — keep session active so user can set new password
+    const type = searchParams.get("type");
+    if (type === "recovery") {
+      return NextResponse.redirect(`${origin}/auth/reset`);
+    }
+    // Email verification — sign out so user must sign in with password
     await supabase.auth.signOut();
   }
 

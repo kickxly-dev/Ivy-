@@ -11,7 +11,7 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified") === "1";
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,11 +19,13 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [signedUp, setSignedUp] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     setError("");
     setPassword("");
     setConfirmPassword("");
+    setResetSent(false);
   }, [mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +43,15 @@ function SignInForm() {
 
     setLoading(true);
     const supabase = createClient();
+
+    if (mode === "reset") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      });
+      if (error) { setError(error.message); } else { setResetSent(true); }
+      setLoading(false);
+      return;
+    }
 
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
@@ -118,8 +129,38 @@ function SignInForm() {
         </motion.div>
       )}
 
+      {/* Reset password view */}
+      {mode === "reset" && (
+        <>
+          <h2 className="text-base font-semibold text-ivy-text mb-1">Reset your password</h2>
+          <p className="text-sm text-ivy-text-muted mb-5">We&apos;ll send a reset link to your email.</p>
+          {resetSent ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-ivy-text-muted">Check your inbox for the reset link.</p>
+              <button onClick={() => setMode("signin")} className="mt-4 text-xs text-ivy-green hover:text-ivy-green-dim transition-colors">
+                Back to sign in
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required autoFocus
+                className="w-full px-3 py-2.5 text-sm bg-ivy-dark border border-ivy-border rounded-xl text-ivy-text placeholder:text-ivy-text-muted outline-none focus:border-ivy-border-light transition-colors" />
+              {error && <p className="text-xs text-red-400">{error}</p>}
+              <button type="submit" disabled={loading || !email.trim()}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-ivy-green text-ivy-black font-semibold text-sm hover:bg-ivy-green-dim disabled:opacity-50 transition-all duration-200">
+                {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+                {loading ? "Sending..." : "Send reset link"}
+              </button>
+              <button type="button" onClick={() => setMode("signin")} className="w-full text-xs text-ivy-text-muted hover:text-ivy-text transition-colors">
+                ← Back to sign in
+              </button>
+            </form>
+          )}
+        </>
+      )}
+
       {/* Tab toggle */}
-      <div className="flex gap-1 mb-5 p-1 rounded-xl bg-ivy-dark border border-ivy-border">
+      {mode !== "reset" && <div className="flex gap-1 mb-5 p-1 rounded-xl bg-ivy-dark border border-ivy-border">
         {(["signin", "signup"] as const).map((m) => (
           <button
             key={m}
@@ -133,7 +174,7 @@ function SignInForm() {
             {m === "signin" ? "Sign in" : "Create account"}
           </button>
         ))}
-      </div>
+      </div>}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
@@ -196,6 +237,11 @@ function SignInForm() {
           {loading && <Loader2 size={14} className="animate-spin" />}
           {loading ? "Please wait..." : mode === "signin" ? "Sign in" : "Create account"}
         </button>
+        {mode === "signin" && (
+          <button type="button" onClick={() => setMode("reset")} className="w-full text-xs text-ivy-text-muted hover:text-ivy-text transition-colors text-center pt-1">
+            Forgot password?
+          </button>
+        )}
       </form>
 
     </>
