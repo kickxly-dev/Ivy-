@@ -198,11 +198,6 @@ function SignInForm() {
         </button>
       </form>
 
-      {mode === "signup" && (
-        <p className="text-xs text-ivy-text-muted text-center mt-4">
-          You&apos;ll need to verify your email before signing in.
-        </p>
-      )}
     </>
   );
 }
