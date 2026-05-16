@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivy-black: #060809;
+  --color-ivy-dark: #0b0d10;
+  --color-ivy-surface: #111419;
+  --color-ivy-surface-2: #161b22;
+  --color-ivy-border: #1e2530;
+  --color-ivy-border-light: #252d3a;
+  --color-ivy-green: #4afa98;
+  --color-ivy-green-dim: #2dd97a;
+  --color-ivy-green-muted: #1a8c4e;
+  --color-ivy-green-ghost: rgba(74, 250, 152, 0.06);
+  --color-ivy-text: #e2e8f0;
+  --color-ivy-text-muted: #64748b;
+  --color-ivy-text-subtle: #94a3b8;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #060809;
+  --foreground: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0d10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2530;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #252d3a;
+}
+
+/* Selection */
+::selection {
+  background: rgba(74, 250, 152, 0.2);
+  color: #e2e8f0;
+}
+
+/* Grid pattern */
+.ivy-grid {
+  background-image:
+    linear-gradient(rgba(74, 250, 152, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 250, 152, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Glow effects */
+.ivy-glow-green {
+  box-shadow: 0 0 40px rgba(74, 250, 152, 0.08), 0 0 80px rgba(74, 250, 152, 0.04);
+}
+
+.ivy-glow-text {
+  text-shadow: 0 0 40px rgba(74, 250, 152, 0.3);
+}
+
+/* Glass effect */
+.ivy-glass {
+  background: rgba(17, 20, 25, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.ivy-glass-light {
+  background: rgba(22, 27, 34, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gradient text */
+.ivy-gradient-text {
+  background: linear-gradient(135deg, #e2e8f0 0%, #4afa98 50%, #e2e8f0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+}
+
+.ivy-gradient-green {
+  background: linear-gradient(135deg, #4afa98 0%, #2dd97a 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Noise texture overlay */
+.ivy-noise::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* Animated gradient border */
+@keyframes border-rotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ivy-border-glow {
+  position: relative;
+}
+
+.ivy-border-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(74, 250, 152, 0.3), rgba(74, 250, 152, 0.05), rgba(74, 250, 152, 0.15));
+  z-index: -1;
+  background-size: 200% 200%;
+  animation: border-rotate 4s ease infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.6s ease forwards;
+}
+
+/* Pulse glow */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Scan line */
+@keyframes scanLine {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Terminal cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-start infinite;
+}
+
+/* Float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Shine effect */
+@keyframes shine {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
