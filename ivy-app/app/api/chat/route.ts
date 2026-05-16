@@ -1,22 +1,20 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import { createServerAuthClient } from "@/lib/supabase-server";
 import { getGroq, MODELS, SYSTEM_PROMPT } from "@/lib/groq";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const supabase = await createServerAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
+  const userId = user.id;
 
   const { messages, conversationId, model = "balanced", imageUrl } = await req.json();
-
-  if (!messages || !Array.isArray(messages)) {
-    return new Response("Missing messages", { status: 400 });
-  }
+  if (!messages || !Array.isArray(messages)) return new Response("Missing messages", { status: 400 });
 
   const db = supabaseAdmin();
   const selectedModel = imageUrl ? MODELS.vision : (MODELS[model as keyof typeof MODELS] ?? MODELS.balanced);
 
-  // Build the message array for Groq
   const groqMessages: { role: "system" | "user" | "assistant"; content: string | { type: string; text?: string; image_url?: { url: string } }[] }[] = [
     { role: "system", content: SYSTEM_PROMPT },
     ...messages.map((m: { role: string; content: string; image_url?: string }) => {
@@ -33,7 +31,6 @@ export async function POST(req: NextRequest) {
     }),
   ];
 
-  // Save the user message to DB if we have a conversationId
   if (conversationId) {
     const lastMsg = messages[messages.length - 1];
     await db.from("messages").insert({
@@ -44,7 +41,6 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Stream response from Groq
   const stream = await getGroq().chat.completions.create({
     model: selectedModel,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,7 +64,6 @@ export async function POST(req: NextRequest) {
           }
         }
       } finally {
-        // Save the complete assistant response to DB
         if (conversationId && fullContent) {
           await db.from("messages").insert({
             conversation_id: conversationId,
@@ -76,7 +71,6 @@ export async function POST(req: NextRequest) {
             content: fullContent,
             model: selectedModel,
           });
-          // Update conversation title from first message if untitled
           const firstUserMsg = messages.find((m: { role: string }) => m.role === "user");
           if (firstUserMsg && messages.length <= 2) {
             const title = firstUserMsg.content.slice(0, 60).trim();
@@ -89,9 +83,6 @@ export async function POST(req: NextRequest) {
   });
 
   return new Response(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "X-Content-Type-Options": "nosniff",
-    },
+    headers: { "Content-Type": "text/plain; charset=utf-8", "X-Content-Type-Options": "nosniff" },
   });
 }

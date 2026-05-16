@@ -1,43 +1,36 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import { createServerAuthClient } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const supabase = await createServerAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const db = supabaseAdmin();
-  const { data, error } = await db
-    .from("projects")
-    .select("*")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
-
+  const { data, error } = await db.from("projects").select("*").eq("user_id", user.id).order("updated_at", { ascending: false });
   if (error) return new Response(error.message, { status: 500 });
   return Response.json(data);
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const supabase = await createServerAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const { name, description, color } = await req.json();
   if (!name?.trim()) return new Response("Name required", { status: 400 });
 
   const db = supabaseAdmin();
-  const { data, error } = await db
-    .from("projects")
-    .insert({ user_id: userId, name: name.trim(), description: description ?? null, color: color ?? "#4afa98" })
-    .select()
-    .single();
-
+  const { data, error } = await db.from("projects").insert({ user_id: user.id, name: name.trim(), description: description ?? null, color: color ?? "#4afa98" }).select().single();
   if (error) return new Response(error.message, { status: 500 });
   return Response.json(data, { status: 201 });
 }
 
 export async function PATCH(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const supabase = await createServerAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return new Response("Missing id", { status: 400 });
@@ -47,28 +40,21 @@ export async function PATCH(req: NextRequest) {
   const updates = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)));
 
   const db = supabaseAdmin();
-  const { data, error } = await db
-    .from("projects")
-    .update(updates)
-    .eq("id", id)
-    .eq("user_id", userId)
-    .select()
-    .single();
-
+  const { data, error } = await db.from("projects").update(updates).eq("id", id).eq("user_id", user.id).select().single();
   if (error) return new Response(error.message, { status: 500 });
   return Response.json(data);
 }
 
 export async function DELETE(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const supabase = await createServerAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return new Response("Missing id", { status: 400 });
 
   const db = supabaseAdmin();
-  const { error } = await db.from("projects").delete().eq("id", id).eq("user_id", userId);
-
+  const { error } = await db.from("projects").delete().eq("id", id).eq("user_id", user.id);
   if (error) return new Response(error.message, { status: 500 });
   return new Response(null, { status: 204 });
 }

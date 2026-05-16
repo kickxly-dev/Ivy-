@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase-auth";
 import Sidebar from "@/components/core/Sidebar";
 import Header from "@/components/core/Header";
-import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 function getPageMeta(pathname: string): { title: string; subtitle?: string } {
@@ -25,19 +23,25 @@ function getPageMeta(pathname: string): { title: string; subtitle?: string } {
 
 export default function CoreLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [authed, setAuthed] = useState(false);
   const pathname = usePathname();
   const meta = getPageMeta(pathname);
-  const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push("/sign-in");
-    }
-  }, [isLoaded, isSignedIn, router]);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push("/sign-in");
+      } else {
+        setAuthed(true);
+      }
+      setLoading(false);
+    });
+  }, [router]);
 
-  // Show loading spinner while Clerk checks auth
-  if (!isLoaded || !isSignedIn) {
+  if (loading || !authed) {
     return (
       <div className="flex h-screen items-center justify-center bg-ivy-black">
         <div className="flex flex-col items-center gap-3">
