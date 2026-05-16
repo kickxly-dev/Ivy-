@@ -1,13 +1,12 @@
 import { NextRequest } from "next/server";
-import { createServerAuthClient } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 export async function POST(req: NextRequest) {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const formData = await req.formData();
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
   if (uploadError) return new Response("Upload failed", { status: 500 });
 
   const { data: urlData } = db.storage.from("ivy-uploads").getPublicUrl(storagePath);
-
   const { data: fileRecord, error: dbError } = await db.from("files").insert({
     user_id: user.id,
     project_id: projectId || null,

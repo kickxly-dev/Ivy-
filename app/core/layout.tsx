@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { createClient } from "@/lib/supabase-auth";
 import { UserContext } from "@/lib/user-context";
-import type { User } from "@supabase/supabase-js";
+import type { AuthUser } from "@/lib/auth";
 import Sidebar from "@/components/core/Sidebar";
 import Header from "@/components/core/Header";
 import { Loader2 } from "lucide-react";
@@ -23,25 +22,23 @@ function getPageMeta(pathname: string): { title: string; subtitle?: string } {
 export default function CoreLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const pathname = usePathname();
   const meta = getPageMeta(pathname);
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push("/sign-in");
-        return;
-      }
-      if (!user.user_metadata?.onboarding_complete) {
-        router.push("/onboarding");
-        return;
-      }
-      setUser(user);
-      setLoading(false);
-    });
+    fetch("/api/auth/me")
+      .then((r) => {
+        if (r.status === 401) { router.push("/sign-in"); return null; }
+        return r.json();
+      })
+      .then((u: AuthUser | null) => {
+        if (!u) return;
+        if (!u.onboarding_complete) { router.push("/onboarding"); return; }
+        setUser(u);
+        setLoading(false);
+      });
   }, [router]);
 
   if (loading || !user) {
@@ -68,9 +65,7 @@ export default function CoreLayout({ children }: { children: React.ReactNode }) 
             sidebarCollapsed={sidebarCollapsed}
             onSidebarToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
     </UserContext.Provider>

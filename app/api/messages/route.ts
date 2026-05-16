@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
-import { createServerAuthClient } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const conversationId = req.nextUrl.searchParams.get("conversationId");

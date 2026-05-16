@@ -1,11 +1,10 @@
 import { NextRequest } from "next/server";
-import { createServerAuthClient } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth";
 import { getGroq, MODELS, SYSTEM_PROMPT } from "@/lib/groq";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
   const userId = user.id;
 

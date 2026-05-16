@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
-import { createServerAuthClient } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET() {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const db = supabaseAdmin();
@@ -14,8 +13,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const { name, description, color } = await req.json();
@@ -28,8 +26,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
@@ -46,8 +43,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const supabase = await createServerAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSession();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
