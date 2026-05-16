@@ -10,8 +10,7 @@ import {
   FolderOpen,
   Bot,
   Settings,
-  ChevronDown,
-  Plus,
+  Search,
   ChevronRight,
   Shield,
 } from "lucide-react";
@@ -32,7 +31,6 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const [workspacesOpen, setWorkspacesOpen] = useState(true);
   const user = useUser();
   const name = displayName(user);
   const initial = userInitial(user);
