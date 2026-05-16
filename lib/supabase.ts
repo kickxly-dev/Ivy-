@@ -64,6 +64,29 @@ export type Message = {
   created_at: string;
 };
 
+export type Agent = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  instructions: string;
+  model: string;
+  status: "active" | "idle" | "paused";
+  color: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AgentRun = {
+  id: string;
+  agent_id: string;
+  status: "running" | "success" | "failed";
+  output: string | null;
+  error: string | null;
+  started_at: string;
+  completed_at: string | null;
+};
+
 export type IvyFile = {
   id: string;
   user_id: string;

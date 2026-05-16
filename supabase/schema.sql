@@ -87,3 +87,35 @@ CREATE TRIGGER conversations_updated_at
 -- ── Storage Bucket ────────────────────────────────────────────────────────────
 -- Run this separately in Supabase Dashboard → Storage → New Bucket
 -- Name: "ivy-uploads"  |  Public: true
+
+-- ── Agents ────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS agents (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      TEXT NOT NULL,
+  name         TEXT NOT NULL,
+  description  TEXT,
+  instructions TEXT NOT NULL DEFAULT '',
+  model        TEXT DEFAULT 'llama-3.3-70b-versatile',
+  status       TEXT DEFAULT 'idle',
+  color        TEXT DEFAULT '#4afa98',
+  created_at   TIMESTAMPTZ DEFAULT now(),
+  updated_at   TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS agents_user_id_idx ON agents (user_id);
+
+CREATE TABLE IF NOT EXISTS agent_runs (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id     UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  status       TEXT NOT NULL DEFAULT 'running',
+  output       TEXT,
+  error        TEXT,
+  started_at   TIMESTAMPTZ DEFAULT now(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS agent_runs_agent_id_idx ON agent_runs (agent_id);
+
+CREATE TRIGGER agents_updated_at
+  BEFORE UPDATE ON agents
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
