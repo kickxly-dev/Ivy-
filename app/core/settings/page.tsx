@@ -5,31 +5,25 @@ import { motion } from "framer-motion";
 import {
   User,
   Bell,
-  Shield,
   Cpu,
   Palette,
-  Key,
-  ChevronRight,
+  Shield,
   Check,
+  Loader2,
+  LogOut,
 } from "lucide-react";
+import { useUser, isAdmin } from "@/lib/user-context";
+import { useRouter } from "next/navigation";
 
 const settingsNav = [
   { id: "profile", icon: User, label: "Profile" },
   { id: "ai", icon: Cpu, label: "AI & Models" },
   { id: "notifications", icon: Bell, label: "Notifications" },
   { id: "appearance", icon: Palette, label: "Appearance" },
-  { id: "security", icon: Shield, label: "Security" },
-  { id: "api", icon: Key, label: "API Keys" },
 ];
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("profile");
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   return (
     <div className="flex h-full">
@@ -64,12 +58,10 @@ export default function SettingsPage() {
           transition={{ duration: 0.2 }}
           className="max-w-xl space-y-6"
         >
-          {activeSection === "profile" && <ProfileSettings onSave={handleSave} />}
-          {activeSection === "ai" && <AISettings onSave={handleSave} />}
-          {activeSection === "notifications" && <NotificationSettings onSave={handleSave} />}
-          {activeSection === "appearance" && <AppearanceSettings onSave={handleSave} />}
-          {activeSection === "security" && <SecuritySettings onSave={handleSave} />}
-          {activeSection === "api" && <APISettings onSave={handleSave} />}
+          {activeSection === "profile" && <ProfileSettings />}
+          {activeSection === "ai" && <AISettings />}
+          {activeSection === "notifications" && <NotificationSettings />}
+          {activeSection === "appearance" && <AppearanceSettings />}
         </motion.div>
       </div>
     </div>
@@ -112,78 +104,132 @@ function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
   );
 }
 
-function ProfileSettings({ onSave }: { onSave: () => void }) {
+function ProfileSettings() {
+  const user = useUser();
+  const admin = isAdmin(user);
+  const router = useRouter();
+  const [name, setName] = useState(user?.full_name ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const initial = name.trim() ? name.trim()[0].toUpperCase() : (user?.email?.[0]?.toUpperCase() ?? "?");
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/auth/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name: name }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await fetch("/api/auth/signout", { method: "POST" });
+    router.push("/sign-in");
+  };
+
   return (
-    <SettingsSection title="Profile" description="Manage your personal information and preferences.">
+    <SettingsSection title="Profile" description="Manage your personal information.">
       {/* Avatar */}
       <div className="flex items-center gap-4 p-4 rounded-xl bg-ivy-surface border border-ivy-border">
         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-ivy-green/30 to-ivy-green/10 border border-ivy-green/20 flex items-center justify-center text-lg font-bold text-ivy-green">
-          A
+          {initial}
         </div>
         <div>
-          <div className="text-sm font-medium text-ivy-text">Alex Chen</div>
-          <div className="text-xs text-ivy-text-muted">alex@example.com</div>
-          <button className="text-xs text-ivy-green hover:text-ivy-green-dim transition-colors mt-1">
-            Change avatar
-          </button>
+          <div className="text-sm font-medium text-ivy-text">{name || user?.email}</div>
+          <div className="text-xs text-ivy-text-muted">{user?.email}</div>
+          {admin && (
+            <div className="flex items-center gap-1 mt-1">
+              <Shield size={10} className="text-ivy-green" />
+              <span className="text-[10px] text-ivy-green font-medium">Admin</span>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="space-y-3">
-        {[
-          { label: "Full Name", value: "Alex Chen" },
-          { label: "Email", value: "alex@example.com" },
-          { label: "Username", value: "@alexchen" },
-        ].map((field) => (
-          <div key={field.label}>
-            <label className="text-xs font-medium text-ivy-text-muted block mb-1.5">{field.label}</label>
-            <input
-              defaultValue={field.value}
-              className="w-full px-3 py-2 text-sm bg-ivy-surface border border-ivy-border rounded-lg text-ivy-text outline-none focus:border-ivy-border-light transition-colors"
-            />
-          </div>
-        ))}
+        <div>
+          <label className="text-xs font-medium text-ivy-text-muted block mb-1.5">Full Name</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            className="w-full px-3 py-2 text-sm bg-ivy-surface border border-ivy-border rounded-lg text-ivy-text placeholder:text-ivy-text-muted outline-none focus:border-ivy-border-light transition-colors"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-ivy-text-muted block mb-1.5">Email</label>
+          <input
+            value={user?.email ?? ""}
+            disabled
+            className="w-full px-3 py-2 text-sm bg-ivy-dark border border-ivy-border rounded-lg text-ivy-text-muted outline-none cursor-not-allowed"
+          />
+        </div>
       </div>
 
-      <button
-        onClick={onSave}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-ivy-green text-ivy-black text-sm font-medium hover:bg-ivy-green-dim transition-colors"
-      >
-        Save changes
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-ivy-green text-ivy-black text-sm font-medium hover:bg-ivy-green-dim disabled:opacity-50 transition-colors"
+        >
+          {saving ? <Loader2 size={13} className="animate-spin" /> : saved ? <Check size={13} /> : null}
+          {saved ? "Saved" : "Save changes"}
+        </button>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-ivy-border text-sm text-ivy-text-muted hover:text-red-400 hover:border-red-400/30 transition-colors"
+        >
+          <LogOut size={13} />
+          Sign out
+        </button>
+      </div>
     </SettingsSection>
   );
 }
 
-function AISettings({ onSave }: { onSave: () => void }) {
-  const models = ["Claude 3.5 Sonnet", "GPT-4o", "Gemini Pro", "Auto (Smart Routing)"];
-  const [selectedModel, setSelectedModel] = useState("Claude 3.5 Sonnet");
+function AISettings() {
+  const models = [
+    { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", description: "Best for complex reasoning and long context" },
+    { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B (Fast)", description: "Fastest responses, great for quick tasks" },
+    { id: "llama-3.2-11b-vision-preview", label: "Llama 3.2 11B Vision", description: "Supports image understanding" },
+  ];
+  const [selectedModel, setSelectedModel] = useState("llama-3.3-70b-versatile");
 
   return (
-    <SettingsSection title="AI & Models" description="Configure AI model preferences and behavior.">
-      <SettingsField label="Default Model" description="Used for new chat sessions">
-        <div className="space-y-1">
+    <SettingsSection title="AI & Models" description="Configure your preferred AI model and behavior.">
+      <div>
+        <div className="text-sm font-medium text-ivy-text mb-3">Default Model</div>
+        <div className="space-y-1.5">
           {models.map((model) => (
             <button
-              key={model}
-              onClick={() => setSelectedModel(model)}
-              className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs transition-colors ${
-                selectedModel === model
+              key={model.id}
+              onClick={() => setSelectedModel(model.id)}
+              className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-xs transition-colors ${
+                selectedModel === model.id
                   ? "bg-ivy-green/10 text-ivy-green border border-ivy-green/20"
                   : "text-ivy-text-muted hover:text-ivy-text hover:bg-ivy-surface border border-transparent"
               }`}
             >
-              <span>{model}</span>
-              {selectedModel === model && <Check size={12} />}
+              <div className="text-left">
+                <div className="font-medium">{model.label}</div>
+                <div className="text-[10px] opacity-70 mt-0.5">{model.description}</div>
+              </div>
+              {selectedModel === model.id && <Check size={12} className="flex-shrink-0 ml-2" />}
             </button>
           ))}
         </div>
-      </SettingsField>
+      </div>
       <SettingsField label="Persistent Memory" description="Remember context across sessions">
         <Toggle defaultChecked />
-      </SettingsField>
-      <SettingsField label="Smart Model Routing" description="Automatically select best model for each task">
-        <Toggle />
       </SettingsField>
       <SettingsField label="Code Execution" description="Allow agents to run code in sandbox">
         <Toggle defaultChecked />
@@ -192,7 +238,7 @@ function AISettings({ onSave }: { onSave: () => void }) {
   );
 }
 
-function NotificationSettings({ onSave }: { onSave: () => void }) {
+function NotificationSettings() {
   return (
     <SettingsSection title="Notifications" description="Control how and when you receive notifications.">
       <SettingsField label="Agent Completions" description="Notify when agents finish tasks">
@@ -201,9 +247,6 @@ function NotificationSettings({ onSave }: { onSave: () => void }) {
       <SettingsField label="Weekly Summary" description="AI-generated weekly digest">
         <Toggle defaultChecked />
       </SettingsField>
-      <SettingsField label="Team Activity" description="Updates from shared workspaces">
-        <Toggle />
-      </SettingsField>
       <SettingsField label="System Alerts" description="Critical system notifications">
         <Toggle defaultChecked />
       </SettingsField>
@@ -211,7 +254,7 @@ function NotificationSettings({ onSave }: { onSave: () => void }) {
   );
 }
 
-function AppearanceSettings({ onSave }: { onSave: () => void }) {
+function AppearanceSettings() {
   return (
     <SettingsSection title="Appearance" description="Customize the look and feel of Ivy.">
       <div>
@@ -242,88 +285,6 @@ function AppearanceSettings({ onSave }: { onSave: () => void }) {
       <SettingsField label="Motion Animations" description="Enable smooth transitions">
         <Toggle defaultChecked />
       </SettingsField>
-    </SettingsSection>
-  );
-}
-
-function SecuritySettings({ onSave }: { onSave: () => void }) {
-  return (
-    <SettingsSection title="Security" description="Manage your account security settings.">
-      <div className="p-4 rounded-xl bg-ivy-surface border border-ivy-border space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-ivy-text">Two-Factor Authentication</div>
-            <div className="text-xs text-ivy-text-muted mt-0.5">Add an extra layer of security</div>
-          </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-            Not enabled
-          </span>
-        </div>
-        <button className="text-sm text-ivy-green hover:text-ivy-green-dim transition-colors flex items-center gap-1">
-          Enable 2FA <ChevronRight size={13} />
-        </button>
-      </div>
-
-      <div className="p-4 rounded-xl bg-ivy-surface border border-ivy-border">
-        <div className="text-sm font-medium text-ivy-text mb-3">Active Sessions</div>
-        {[
-          { device: "MacBook Pro 16\"", location: "San Francisco, CA", current: true },
-          { device: "iPhone 15 Pro", location: "San Francisco, CA", current: false },
-        ].map((session, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-ivy-border last:border-0">
-            <div>
-              <div className="text-xs text-ivy-text">{session.device}</div>
-              <div className="text-[10px] text-ivy-text-muted">{session.location}</div>
-            </div>
-            {session.current ? (
-              <span className="text-[10px] text-ivy-green">Current</span>
-            ) : (
-              <button className="text-[10px] text-red-400 hover:text-red-300 transition-colors">Revoke</button>
-            )}
-          </div>
-        ))}
-      </div>
-    </SettingsSection>
-  );
-}
-
-function APISettings({ onSave }: { onSave: () => void }) {
-  return (
-    <SettingsSection title="API Keys" description="Manage API keys for external integrations.">
-      <div className="p-4 rounded-xl bg-ivy-surface border border-ivy-border space-y-3">
-        <div className="text-xs font-semibold text-ivy-text uppercase tracking-wider">Your API Key</div>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 px-3 py-2 rounded-lg bg-ivy-dark border border-ivy-border text-xs text-ivy-text-muted font-mono">
-            ivy_sk_••••••••••••••••••••••••••••••••
-          </code>
-          <button className="px-3 py-2 rounded-lg border border-ivy-border text-xs text-ivy-text-muted hover:text-ivy-text transition-colors">
-            Reveal
-          </button>
-        </div>
-        <button className="text-xs text-ivy-green hover:text-ivy-green-dim transition-colors">
-          Regenerate key
-        </button>
-      </div>
-
-      <div className="p-4 rounded-xl bg-ivy-surface border border-ivy-border">
-        <div className="text-xs font-semibold text-ivy-text uppercase tracking-wider mb-3">Connected Providers</div>
-        {[
-          { name: "Anthropic", status: "connected" },
-          { name: "OpenAI", status: "connected" },
-          { name: "Google AI", status: "not connected" },
-        ].map((provider) => (
-          <div key={provider.name} className="flex items-center justify-between py-2 border-b border-ivy-border last:border-0">
-            <span className="text-sm text-ivy-text">{provider.name}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
-              provider.status === "connected"
-                ? "bg-ivy-green/10 text-ivy-green border-ivy-green/20"
-                : "bg-ivy-surface text-ivy-text-muted border-ivy-border"
-            }`}>
-              {provider.status}
-            </span>
-          </div>
-        ))}
-      </div>
     </SettingsSection>
   );
 }
