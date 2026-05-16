@@ -43,7 +43,7 @@ function SignInForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -52,6 +52,9 @@ function SignInForm() {
       });
       if (error) {
         setError(error.message);
+      } else if (data.session) {
+        // Email confirmation is disabled — user is already signed in
+        router.push("/core");
       } else {
         setSignedUp(true);
       }
