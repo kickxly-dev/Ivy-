@@ -1,43 +1,35 @@
-import { SignUp } from "@clerk/nextjs";
+"use client";
+
+import { useEffect } from "react";
+import { useAuth, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export default function SignUpPage() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const { openSignUp } = useClerk();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isSignedIn) {
+      router.push("/core");
+      return;
+    }
+    openSignUp({});
+  }, [isLoaded, isSignedIn, router, openSignUp]);
+
   return (
-    <div className="min-h-screen bg-ivy-black ivy-grid flex items-center justify-center px-4">
+    <div className="min-h-screen bg-ivy-black ivy-grid flex items-center justify-center">
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
         <div className="w-[600px] h-[400px] bg-ivy-green/[0.04] rounded-full blur-[120px]" />
       </div>
-
-      <div className="relative z-10 flex flex-col items-center gap-8">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-ivy-green/10 border border-ivy-green/20 flex items-center justify-center">
-            <IvyLogo />
-          </div>
-          <span className="text-ivy-text font-semibold text-lg">Ivy</span>
+      <div className="relative z-10 flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-ivy-green/10 border border-ivy-green/20 flex items-center justify-center">
+          <IvyLogo />
         </div>
-
-        <SignUp
-          appearance={{
-            elements: {
-              rootBox: "w-full",
-              card: "bg-ivy-surface border border-ivy-border rounded-2xl shadow-[0_20px_80px_rgba(0,0,0,0.5)] p-0",
-              headerTitle: "text-ivy-text text-lg font-semibold",
-              headerSubtitle: "text-ivy-text-muted text-sm",
-              socialButtonsBlockButton: "bg-ivy-dark border border-ivy-border text-ivy-text hover:bg-ivy-surface-2 hover:border-ivy-border-light transition-colors rounded-xl",
-              socialButtonsBlockButtonText: "text-ivy-text text-sm font-medium",
-              dividerLine: "bg-ivy-border",
-              dividerText: "text-ivy-text-muted text-xs",
-              formFieldLabel: "text-ivy-text-subtle text-sm font-medium",
-              formFieldInput: "bg-ivy-dark border border-ivy-border text-ivy-text rounded-xl px-3 py-2 text-sm outline-none focus:border-ivy-border-light transition-colors placeholder:text-ivy-text-muted",
-              formButtonPrimary: "bg-ivy-green text-ivy-black font-semibold rounded-xl hover:bg-ivy-green-dim transition-colors text-sm",
-              footerActionText: "text-ivy-text-muted text-sm",
-              footerActionLink: "text-ivy-green hover:text-ivy-green-dim transition-colors text-sm font-medium",
-              formFieldErrorText: "text-red-400 text-xs",
-            },
-            layout: {
-              socialButtonsPlacement: "top",
-            },
-          }}
-        />
+        <Loader2 size={16} className="text-ivy-text-muted animate-spin" />
+        <p className="text-xs text-ivy-text-muted">Opening sign up...</p>
       </div>
     </div>
   );
