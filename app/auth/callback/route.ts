@@ -25,7 +25,9 @@ export async function GET(request: NextRequest) {
       }
     );
     await supabase.auth.exchangeCodeForSession(code);
+    // Sign out so user must sign in with their password after verifying
+    await supabase.auth.signOut();
   }
 
-  return NextResponse.redirect(`${origin}/core`);
+  return NextResponse.redirect(`${origin}/sign-in?verified=1`);
 }

@@ -63,13 +63,13 @@ export default function Navbar() {
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
           <Link
-            href="#"
+            href="/sign-in"
             className="text-sm text-ivy-text-muted hover:text-ivy-text transition-colors duration-200"
           >
             Sign in
           </Link>
           <Link
-            href="/core"
+            href="/sign-in"
             className="px-4 py-1.5 rounded-lg bg-ivy-green text-ivy-black text-sm font-medium hover:bg-ivy-green-dim transition-all duration-200 hover:shadow-[0_0_20px_rgba(74,250,152,0.25)]"
           >
             Get started
@@ -106,11 +106,11 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="pt-2 flex flex-col gap-2">
-                <Link href="#" className="px-3 py-2.5 text-sm text-ivy-text-muted">
+                <Link href="/sign-in" className="px-3 py-2.5 text-sm text-ivy-text-muted">
                   Sign in
                 </Link>
                 <Link
-                  href="/core"
+                  href="/sign-in"
                   className="px-4 py-2 rounded-lg bg-ivy-green text-ivy-black text-sm font-medium text-center"
                 >
                   Get started
