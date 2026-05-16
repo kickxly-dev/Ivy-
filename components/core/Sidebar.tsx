@@ -11,9 +11,9 @@ import {
   Bot,
   Settings,
   Search,
-  ChevronRight,
   Shield,
   LogOut,
+  HardDrive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/core", exact: true },
   { icon: MessageSquare, label: "Chat", href: "/core/chat" },
   { icon: FolderOpen, label: "Projects", href: "/core/projects" },
+  { icon: HardDrive, label: "Drive", href: "/core/drive" },
   { icon: Bot, label: "Agents", href: "/core/agents" },
 ];
 

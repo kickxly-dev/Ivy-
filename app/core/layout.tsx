@@ -13,6 +13,7 @@ function getPageMeta(pathname: string): { title: string; subtitle?: string } {
     "/core": { title: "Dashboard", subtitle: "Welcome back" },
     "/core/chat": { title: "AI Chat", subtitle: "Multi-model intelligence" },
     "/core/projects": { title: "Projects", subtitle: "Manage your workspaces" },
+    "/core/drive": { title: "Drive", subtitle: "Files & uploads" },
     "/core/agents": { title: "Agents", subtitle: "Autonomous AI workers" },
     "/core/settings": { title: "Settings", subtitle: "Account & preferences" },
   };

@@ -11,6 +11,7 @@ import {
   Check,
   Loader2,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { useUser, isAdmin } from "@/lib/user-context";
 import { useRouter } from "next/navigation";
@@ -114,6 +115,21 @@ function ProfileSettings() {
 
   const initial = name.trim() ? name.trim()[0].toUpperCase() : (user?.email?.[0]?.toUpperCase() ?? "?");
 
+  const [claimingAdmin, setClaimingAdmin] = useState(false);
+  const [adminClaimed, setAdminClaimed] = useState(false);
+
+  const handleClaimAdmin = async () => {
+    setClaimingAdmin(true);
+    try {
+      const res = await fetch("/api/admin", { method: "POST" });
+      if (res.ok) {
+        setAdminClaimed(true);
+      }
+    } finally {
+      setClaimingAdmin(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -175,7 +191,7 @@ function ProfileSettings() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={handleSave}
           disabled={saving}
@@ -192,6 +208,29 @@ function ProfileSettings() {
           Sign out
         </button>
       </div>
+
+      {/* Admin claim — only visible for owner email if not yet admin */}
+      {!admin && user?.email === "kickxly0@gmail.com" && (
+        <div className="mt-2 p-3 rounded-xl border border-ivy-green/20 bg-ivy-green/5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-medium text-ivy-text flex items-center gap-1.5">
+                <ShieldCheck size={12} className="text-ivy-green" />
+                Claim admin access
+              </div>
+              <div className="text-[10px] text-ivy-text-muted mt-0.5">Your account is the owner of this workspace.</div>
+            </div>
+            <button
+              onClick={handleClaimAdmin}
+              disabled={claimingAdmin || adminClaimed}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ivy-green text-ivy-black text-xs font-semibold hover:bg-ivy-green-dim disabled:opacity-50 transition-colors whitespace-nowrap"
+            >
+              {claimingAdmin ? <Loader2 size={11} className="animate-spin" /> : adminClaimed ? <Check size={11} /> : null}
+              {adminClaimed ? "Done — sign out & back in" : "Make me admin"}
+            </button>
+          </div>
+        </div>
+      )}
     </SettingsSection>
   );
 }

@@ -47,15 +47,23 @@ export async function getSession(): Promise<AuthUser | null> {
   if (!token) return null;
 
   const db = supabaseAdmin();
-  const { data } = await db
+
+  const { data: session } = await db
     .from("auth_sessions")
-    .select("user_id, expires_at, auth_users!inner(id, email, role, full_name, use_case, onboarding_complete, created_at)")
+    .select("user_id")
     .eq("token_hash", hashToken(token))
     .gt("expires_at", new Date().toISOString())
     .single();
 
-  if (!data) return null;
-  return (data as unknown as { auth_users: AuthUser }).auth_users;
+  if (!session) return null;
+
+  const { data: user } = await db
+    .from("auth_users")
+    .select("id, email, role, full_name, use_case, onboarding_complete, created_at")
+    .eq("id", session.user_id)
+    .single();
+
+  return user as AuthUser | null;
 }
 
 export async function deleteSession(): Promise<void> {

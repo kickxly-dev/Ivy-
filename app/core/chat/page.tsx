@@ -63,8 +63,10 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const initialConvIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    initialConvIdRef.current = new URLSearchParams(window.location.search).get("id");
     loadConversations();
   }, []);
 
@@ -78,6 +80,11 @@ export default function ChatPage() {
       if (res.ok) {
         const data = await res.json();
         setConversations(data);
+        if (initialConvIdRef.current) {
+          const conv = data.find((c: Conversation) => c.id === initialConvIdRef.current);
+          if (conv) selectConversation(conv);
+          initialConvIdRef.current = null;
+        }
       }
     } catch {}
   };
@@ -237,7 +244,10 @@ export default function ChatPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend();
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   const copyMessage = (content: string) => navigator.clipboard.writeText(content);
@@ -487,7 +497,7 @@ export default function ChatPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-ivy-text-muted hidden sm:block">⌘↵ to send</span>
+                  <span className="text-[10px] text-ivy-text-muted hidden sm:block">⇧↵ for newline</span>
                   <button
                     onClick={handleSend}
                     disabled={(!input.trim() && !pendingImage) || isLoading}
